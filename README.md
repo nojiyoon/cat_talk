@@ -1,7 +1,7 @@
 # 🐱 Cat Talk (말하는 고양이 미미)
 
 **Cat Talk**는 사용자의 목소리와 표정을 인식하여 대화하는 인터랙티브 3D 웹 애플리케이션입니다.  
-5살 아메리칸 숏헤어 고양이 '미미'와 함께 즐거운 대화를 나누어보세요!
+5살 고양이 '미미'와 함께 즐거운 대화를 나누어보세요!
 
 ![Project Status](https://img.shields.io/badge/Status-Active-green)
 ![License](https://img.shields.io/badge/License-MIT-blue)
