@@ -48,13 +48,19 @@ export function useSpeech() {
         recognitionRef.current = recognition
     }, [])
 
+    // Base64 silent MP3 to unlock audio context
+    const SILENT_AUDIO_URL = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMD//////////////////////////////////////////////////////////////////wAAADxMYXZjNTguMTM0LjEwMAAAAAAAAAAAAAAA//OEAAABAAAAAB0AAAAAAAAAAAAAAJFi'
+
     const startListening = useCallback(() => {
         if (recognitionRef.current && !isListening) {
-            // Mobile Audio Unlock Hack: Play a silent sound on user interaction
-            // This is required because many mobile browsers block audio playback 
-            // unless it's triggered directly by a user gesture (like a click).
-            const silentAudio = new Audio();
-            silentAudio.play().catch(() => { });
+            // Mobile Audio Unlock: Initialize and play silent audio on user gesture
+            if (!audioRef.current) {
+                audioRef.current = new Audio()
+            }
+
+            // Play silent audio to unlock the element
+            audioRef.current.src = SILENT_AUDIO_URL
+            audioRef.current.play().catch(e => console.log('Audio unlock failed:', e))
 
             recognitionRef.current.start()
             setIsListening(true)
@@ -75,29 +81,27 @@ export function useSpeech() {
 
             const mp3 = await openai.audio.speech.create({
                 model: "tts-1",
-                voice: "nova", // 'nova' is a good fit for a lively/cute persona
+                voice: "nova",
                 input: text,
             })
 
             const blob = await mp3.blob()
             const url = URL.createObjectURL(blob)
 
-            if (audioRef.current) {
-                audioRef.current.pause()
-                audioRef.current = null
+            if (!audioRef.current) {
+                audioRef.current = new Audio()
             }
 
-            const audio = new Audio(url)
-            audioRef.current = audio
+            // Reuse the same audio element that was unlocked
+            audioRef.current.src = url
 
-            audio.onended = () => {
+            audioRef.current.onended = () => {
                 setIsSpeaking(false)
                 URL.revokeObjectURL(url)
             }
 
-            // Handle promise returned by play()
             try {
-                await audio.play()
+                await audioRef.current.play()
             } catch (playError) {
                 console.error('Audio playback failed:', playError)
                 setIsSpeaking(false)
@@ -106,7 +110,7 @@ export function useSpeech() {
         } catch (error) {
             console.error('OpenAI TTS error:', error)
             setIsSpeaking(false)
-            // Fallback to browser TTS if OpenAI fails
+            // Fallback to browser TTS
             const utterance = new SpeechSynthesisUtterance(text)
             utterance.lang = 'ko-KR'
             window.speechSynthesis.speak(utterance)
