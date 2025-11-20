@@ -76,44 +76,93 @@ export function useSpeech() {
     }, [isListening])
 
     const speak = useCallback(async (text) => {
-        try {
-            setIsSpeaking(true)
+        setIsSpeaking(true)
 
+        // Helper to play audio from a URL
+        const playAudio = async (url) => {
+            if (!audioRef.current) {
+                audioRef.current = new Audio()
+            }
+            audioRef.current.src = url
+
+            return new Promise((resolve, reject) => {
+                audioRef.current.onended = () => {
+                    setIsSpeaking(false)
+                    URL.revokeObjectURL(url)
+                    resolve()
+                }
+                audioRef.current.onerror = (e) => {
+                    setIsSpeaking(false)
+                    reject(e)
+                }
+                audioRef.current.play().catch(reject)
+            })
+        }
+
+        // 1. Try ElevenLabs TTS
+        try {
+            const elevenLabsKey = import.meta.env.VITE_ELEVENLABS_API_KEY
+            const voiceId = import.meta.env.VITE_ELEVENLABS_VOICE_ID
+
+            if (!elevenLabsKey || !voiceId) {
+                throw new Error('ElevenLabs credentials not found')
+            }
+
+            const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+                method: 'POST',
+                headers: {
+                    'xi-api-key': elevenLabsKey,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    text: text,
+                    model_id: "eleven_multilingual_v2",
+                    voice_settings: {
+                        stability: 0.5,
+                        similarity_boost: 0.75,
+                    }
+                })
+            })
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}))
+                throw new Error(`ElevenLabs API Error: ${response.status} ${JSON.stringify(errorData)}`)
+            }
+
+            const blob = await response.blob()
+            const url = URL.createObjectURL(blob)
+            await playAudio(url)
+            return // Success, exit function
+
+        } catch (elevenLabsError) {
+            console.warn('ElevenLabs TTS failed, switching to OpenAI Fallback:', elevenLabsError)
+            // Fallback proceeds to next block
+        }
+
+        // 2. Fallback: OpenAI TTS
+        try {
             const mp3 = await openai.audio.speech.create({
                 model: "tts-1",
-                voice: "nova",
+                voice: "nova", // 'nova' fits the cat persona
                 input: text,
             })
 
             const blob = await mp3.blob()
             const url = URL.createObjectURL(blob)
+            await playAudio(url)
+            return // Success
 
-            if (!audioRef.current) {
-                audioRef.current = new Audio()
-            }
+        } catch (openAIError) {
+            console.error('OpenAI TTS also failed:', openAIError)
 
-            // Reuse the same audio element that was unlocked
-            audioRef.current.src = url
-
-            audioRef.current.onended = () => {
-                setIsSpeaking(false)
-                URL.revokeObjectURL(url)
-            }
-
-            try {
-                await audioRef.current.play()
-            } catch (playError) {
-                console.error('Audio playback failed:', playError)
-                setIsSpeaking(false)
-            }
-
-        } catch (error) {
-            console.error('OpenAI TTS error:', error)
-            setIsSpeaking(false)
-            // Fallback to browser TTS
+            // 3. Fallback: Browser TTS
+            setIsSpeaking(false) // Reset state before browser TTS
             const utterance = new SpeechSynthesisUtterance(text)
             utterance.lang = 'ko-KR'
+            utterance.onend = () => setIsSpeaking(false)
+            utterance.onerror = () => setIsSpeaking(false)
             window.speechSynthesis.speak(utterance)
+            setIsSpeaking(true)
         }
     }, [])
 
