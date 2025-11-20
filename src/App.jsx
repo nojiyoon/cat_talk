@@ -3,15 +3,25 @@ import Scene from './components/Scene'
 import { useSpeech } from './hooks/useSpeech'
 import { useFaceLandmarker } from './hooks/useFaceLandmarker'
 import { getCatResponse } from './services/aiService'
+import { supabase } from './services/supabase'
 import './App.css'
 
 function App() {
   const { isListening, isSpeaking, transcript, startListening, stopListening, speak } = useSpeech()
   const { emotion, emotionScores, isReady, isModelLoading, isFaceDetected, startDetection, stopDetection } = useFaceLandmarker()
   const [lastResponse, setLastResponse] = useState('')
-  const [chatHistory, setChatHistory] = useState([])
+  // Initialize chat history from localStorage
+  const [chatHistory, setChatHistory] = useState(() => {
+    const saved = localStorage.getItem('cat_talk_history')
+    return saved ? JSON.parse(saved) : []
+  })
   const videoRef = useRef(null)
   const [cameraActive, setCameraActive] = useState(false)
+
+  // Save chat history to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('cat_talk_history', JSON.stringify(chatHistory))
+  }, [chatHistory])
 
   // Initialize camera for face detection
   useEffect(() => {
@@ -55,18 +65,31 @@ function App() {
     stopListening()
 
     try {
-      const response = await getCatResponse(userMessage, emotion, chatHistory)
+      // Send only the last 10 messages for context to save tokens
+      const contextHistory = chatHistory.slice(-10)
+      const response = await getCatResponse(userMessage, emotion, contextHistory)
 
-      // Update history with user message and assistant response
+      // Update history with user message and assistant response (keep all history)
       const newHistory = [
         ...chatHistory,
         { role: 'user', content: userMessage },
         { role: 'assistant', content: response }
-      ].slice(-7) // Keep only last 7 messages
+      ]
 
       setChatHistory(newHistory)
       setLastResponse(response)
       speak(response)
+
+      // Save to Supabase (Fire and forget)
+      try {
+        await supabase.from('chat_history').insert([
+          { role: 'user', content: userMessage, emotion: emotion },
+          { role: 'assistant', content: response, emotion: 'neutral' } // Assistant emotion could be refined later
+        ])
+      } catch (dbError) {
+        console.error('Failed to save to DB:', dbError)
+      }
+
     } catch (error) {
       console.error('Failed to get response:', error)
       speak('미안하다냥... 무슨 말인지 못 알아들었냥')
