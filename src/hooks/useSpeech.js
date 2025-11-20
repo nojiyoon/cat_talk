@@ -50,6 +50,12 @@ export function useSpeech() {
 
     const startListening = useCallback(() => {
         if (recognitionRef.current && !isListening) {
+            // Mobile Audio Unlock Hack: Play a silent sound on user interaction
+            // This is required because many mobile browsers block audio playback 
+            // unless it's triggered directly by a user gesture (like a click).
+            const silentAudio = new Audio();
+            silentAudio.play().catch(() => { });
+
             recognitionRef.current.start()
             setIsListening(true)
             setTranscript('')
@@ -89,7 +95,14 @@ export function useSpeech() {
                 URL.revokeObjectURL(url)
             }
 
-            audio.play()
+            // Handle promise returned by play()
+            try {
+                await audio.play()
+            } catch (playError) {
+                console.error('Audio playback failed:', playError)
+                setIsSpeaking(false)
+            }
+
         } catch (error) {
             console.error('OpenAI TTS error:', error)
             setIsSpeaking(false)
