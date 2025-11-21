@@ -28,9 +28,10 @@
 - 대화 상태에 따라 고양이가 반응하는 시각적 요소를 포함합니다.
 
 ### 🔮 고양이 관상소 (Cat Physiognomy)
-- **"관상 봐주기"** 버튼을 누르면 사용자의 얼굴 특징(눈 크기, 이마 넓이 등)을 분석합니다.
+- **"관상 봐주기"** 버튼을 누르면 사용자의 얼굴 특징과 **동물상(Animal Face)**을 분석합니다.
+- **Teachable Machine**으로 학습된 모델을 사용하여 사용자가 어떤 동물(강아지상, 고양이상, 호랑이상 등 9종)과 닮았는지 알려줍니다.
 - **'점쟁이 냥이'** 페르소나가 등장하여, 분석된 특징을 바탕으로 엉뚱하고 재미있는 운세를 봐줍니다.
-- 예: "이마가 넓은 걸 보니 낮잠을 아주 편하게 잘 상이구먼유~"
+- 예: "강아지상이구먼유! 밥그릇 뺏기지 않게 조심해야겄슈~"
 
 ---
 
@@ -41,6 +42,7 @@
 - **AI & ML**:
   - OpenAI API (GPT-4o-mini) - 대화 생성
   - MediaPipe Face Landmarker - 얼굴 및 감정 인식
+  - Teachable Machine (TensorFlow.js) - 동물상 분류
 - **Web APIs**: Web Speech API (STT/TTS)
 - **Styling**: CSS3 (Glassmorphism UI)
 - **Deployment**: Vercel
@@ -107,7 +109,8 @@ src/
 │   └── CatModel.jsx     # 고양이 3D 모델 컴포넌트
 ├── hooks/
 │   ├── useSpeech.js     # 음성 인식 및 합성 커스텀 훅
-│   └── useFaceLandmarker.js # 얼굴 및 감정 인식 로직
+│   ├── useFaceLandmarker.js # 얼굴 및 감정 인식 로직
+│   └── useTeachableMachine.js # 동물상 분류 모델 로직
 ├── services/
 │   └── aiService.js     # OpenAI API 통신 로직
 ├── App.jsx              # 메인 애플리케이션 로직 (UI, 상태 관리)
