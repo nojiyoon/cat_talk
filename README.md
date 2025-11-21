@@ -77,6 +77,26 @@ npm run dev
 브라우저에서 `http://localhost:5173`으로 접속하여 실행합니다.
 
 ---
+ 
+## 🗄️ 데이터베이스 스키마 (Database Schema)
+
+이 프로젝트는 Supabase를 사용합니다. 다음 테이블을 생성해주세요.
+
+### 1. `chat_history` (일반 대화 기록)
+- `id`: uuid (Primary Key, default: `gen_random_uuid()`)
+- `created_at`: timestamptz (default: `now()`)
+- `role`: text ('user' or 'assistant')
+- `content`: text
+- `emotion`: text
+
+### 2. `physiognomy_logs` (관상 분석 기록)
+- `id`: uuid (Primary Key, default: `gen_random_uuid()`)
+- `created_at`: timestamptz (default: `now()`)
+- `features`: jsonb (얼굴 특징 데이터)
+- `response`: text (AI 관상 풀이)
+- `emotion`: text (당시 감정)
+
+---
 
 ## 📂 프로젝트 구조 (Project Structure)
 

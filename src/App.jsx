@@ -154,14 +154,17 @@ function App() {
       ]
       setChatHistory(newHistory)
 
-      // Save to Supabase
+      // Save to Supabase (Physiognomy Logs)
       try {
-        await supabase.from('chat_history').insert([
-          { role: 'user', content: `🔮 관상 봐줘! (특징: ${featureText})`, emotion: emotion },
-          { role: 'assistant', content: response, emotion: 'neutral' }
+        await supabase.from('physiognomy_logs').insert([
+          {
+            features: features,
+            response: response,
+            emotion: emotion
+          }
         ])
       } catch (dbError) {
-        console.error('Failed to save physiognomy to DB:', dbError)
+        console.error('Failed to save physiognomy log to DB:', dbError)
       }
 
     } catch (error) {
