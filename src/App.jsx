@@ -2,13 +2,17 @@ import { useState, useEffect, useRef } from 'react'
 import Scene from './components/Scene'
 import { useSpeech } from './hooks/useSpeech'
 import { useFaceLandmarker } from './hooks/useFaceLandmarker'
+import { useTeachableMachine } from './hooks/useTeachableMachine'
 import { getCatResponse } from './services/aiService'
 import { supabase } from './services/supabase'
 import './App.css'
 
 function App() {
   const { isListening, isSpeaking, transcript, startListening, stopListening, speak } = useSpeech()
-  const { emotion, emotionScores, isReady, isModelLoading, isFaceDetected, faceLandmarks, startDetection, stopDetection } = useFaceLandmarker()
+  const { emotion, emotionScores, isReady, isModelLoading: isFaceModelLoading, isFaceDetected, faceLandmarks, startDetection, stopDetection } = useFaceLandmarker()
+  const { predict: predictAnimalFace, isModelLoading: isTMModelLoading } = useTeachableMachine()
+
+  const isModelLoading = isFaceModelLoading || isTMModelLoading
   const [lastResponse, setLastResponse] = useState('')
   // Initialize chat history from localStorage
   const [chatHistory, setChatHistory] = useState(() => {
@@ -122,25 +126,45 @@ function App() {
   };
 
   const handlePhysiognomy = async () => {
-    if (!isFaceDetected || !faceLandmarks) {
-      speak("얼굴이 안 보여유~ 좀 더 가까이 와봐유!")
+    if (!videoRef.current) {
+      speak("카메라가 안 보여유!")
       return
     }
 
-    const features = analyzePhysiognomy()
-    if (!features) return
-
-    const featureText = `눈: ${features.eyeSize}, 이마: ${features.foreheadHeight}`
-
-    speak("어디 보자... 관상을 한번 봐볼까유?")
-    setLastResponse("🔮 관상 보는 중... (뚫어지게 쳐다봄)")
+    speak("어디 보자... 무슨 동물상인지 한번 봐볼까유?")
+    setLastResponse("🔮 관상(동물상) 보는 중... (킁킁)")
 
     try {
+      // 1. Analyze Animal Face
+      const predictions = await predictAnimalFace(videoRef.current)
+
+      let animalType = "알 수 없음"
+      let description = ""
+
+      if (predictions && predictions.length > 0) {
+        const topPrediction = predictions[0]
+        animalType = topPrediction.className
+        const probability = (topPrediction.probability * 100).toFixed(1)
+        description = `당신은 ${probability}% 확률로 '${animalType}'입니다.`
+      }
+
+      // 2. Analyze Geometric Features (Optional, keeping it for extra detail if landmarks exist)
+      let featureText = ""
+      if (faceLandmarks) {
+        const features = analyzePhysiognomy()
+        if (features) {
+          featureText = `(추가 특징: 눈 ${features.eyeSize}, 이마 ${features.foreheadHeight})`
+        }
+      }
+
+      const fullAnalysis = `${description} ${featureText}`.trim()
+
+      // 3. Get AI Response
       const response = await getCatResponse(
-        `내 관상 좀 봐줘! 특징: ${featureText}`,
+        `내 동물상 좀 봐줘! 결과: ${fullAnalysis}`,
         emotion,
         chatHistory.slice(-5),
-        { isPhysiognomyMode: true, features }
+        { isPhysiognomyMode: true, animalType, features: fullAnalysis }
       )
 
       setLastResponse(response)
@@ -149,16 +173,16 @@ function App() {
       // Save to history
       const newHistory = [
         ...chatHistory,
-        { role: 'user', content: "🔮 관상 봐줘!" },
+        { role: 'user', content: "🔮 동물상 봐줘!" },
         { role: 'assistant', content: response }
       ]
       setChatHistory(newHistory)
 
-      // Save to Supabase (Physiognomy Logs)
+      // Save to Supabase
       try {
         await supabase.from('physiognomy_logs').insert([
           {
-            features: features,
+            features: { animalType, fullAnalysis },
             response: response,
             emotion: emotion
           }
@@ -169,7 +193,7 @@ function App() {
 
     } catch (error) {
       console.error('Physiognomy error:', error)
-      speak("아이고, 기운이 딸려서 못 보겄슈...")
+      speak("아이고, 잘 안 보이네유...")
     }
   }
 
