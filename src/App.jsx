@@ -154,6 +154,16 @@ function App() {
       ]
       setChatHistory(newHistory)
 
+      // Save to Supabase
+      try {
+        await supabase.from('chat_history').insert([
+          { role: 'user', content: `🔮 관상 봐줘! (특징: ${featureText})`, emotion: emotion },
+          { role: 'assistant', content: response, emotion: 'neutral' }
+        ])
+      } catch (dbError) {
+        console.error('Failed to save physiognomy to DB:', dbError)
+      }
+
     } catch (error) {
       console.error('Physiognomy error:', error)
       speak("아이고, 기운이 딸려서 못 보겄슈...")

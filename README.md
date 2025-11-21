@@ -27,6 +27,11 @@
 - **React Three Fiber**를 이용한 3D 씬을 구현했습니다.
 - 대화 상태에 따라 고양이가 반응하는 시각적 요소를 포함합니다.
 
+### 🔮 고양이 관상소 (Cat Physiognomy)
+- **"관상 봐주기"** 버튼을 누르면 사용자의 얼굴 특징(눈 크기, 이마 넓이 등)을 분석합니다.
+- **'점쟁이 냥이'** 페르소나가 등장하여, 분석된 특징을 바탕으로 엉뚱하고 재미있는 운세를 봐줍니다.
+- 예: "이마가 넓은 걸 보니 낮잠을 아주 편하게 잘 상이구먼유~"
+
 ---
 
 ## 🛠️ 기술 스택 (Tech Stack)
@@ -59,6 +64,10 @@ npm install
 프로젝트 루트에 `.env` 파일을 생성하고 OpenAI API 키를 입력하세요.
 ```env
 VITE_OPENAI_API_KEY=your_openai_api_key_here
+VITE_SUPABASE_URL=your_supabase_url_here
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+VITE_ELEVENLABS_API_KEY=your_elevenlabs_key_here (Optional)
+VITE_ELEVENLABS_VOICE_ID=your_voice_id_here (Optional)
 ```
 
 ### 4. 개발 서버 실행
