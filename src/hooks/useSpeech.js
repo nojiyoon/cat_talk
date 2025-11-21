@@ -1,10 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-    apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-    dangerouslyAllowBrowser: true // Required for client-side usage
-})
+const apiKey = import.meta.env.VITE_OPENAI_API_KEY
+let openai
+
+if (apiKey) {
+    openai = new OpenAI({
+        apiKey: apiKey,
+        dangerouslyAllowBrowser: true // Required for client-side usage
+    })
+}
 
 export function useSpeech() {
     const [isListening, setIsListening] = useState(false)
@@ -141,6 +146,8 @@ export function useSpeech() {
 
         // 2. Fallback: OpenAI TTS
         try {
+            if (!openai) throw new Error('OpenAI API Key missing')
+
             const mp3 = await openai.audio.speech.create({
                 model: "tts-1",
                 voice: "nova", // 'nova' fits the cat persona

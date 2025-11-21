@@ -102,9 +102,17 @@ body {
   color: #8b0a2d;
 }
 
-.mic-button {
+.button-group {
   margin-top: auto;
   margin-bottom: 2rem;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.mic-button {
   padding: 1.25rem 3rem;
   font-size: 1.25rem;
   font-weight: 600;
@@ -115,6 +123,35 @@ body {
   cursor: pointer;
   box-shadow: 0 6px 12px rgba(255, 105, 180, 0.3);
   transition: all 0.3s ease;
+}
+
+.physiognomy-button {
+  padding: 1.25rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 50px;
+  background: linear-gradient(135deg, #9370DB, #E6E6FA);
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 6px 12px rgba(147, 112, 219, 0.3);
+  transition: all 0.3s ease;
+}
+
+.physiognomy-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(147, 112, 219, 0.4);
+}
+
+.physiognomy-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.physiognomy-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #ccc;
+  box-shadow: none;
 }
 
 .mic-button:hover:not(:disabled) {
@@ -270,11 +307,19 @@ strong {
     text-overflow: ellipsis;
   }
 
-  .mic-button {
+  .button-group {
+    flex-direction: column;
+    width: 100%;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .mic-button,
+  .physiognomy-button {
     padding: 1rem 2rem;
     font-size: 1.1rem;
-    margin-bottom: 1.5rem;
     width: 80%;
+    margin-bottom: 0;
   }
 
   .transcript-box,

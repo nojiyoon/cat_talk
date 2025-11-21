@@ -7,6 +7,7 @@ export function useFaceLandmarker() {
     const [isReady, setIsReady] = useState(false)
     const [isModelLoading, setIsModelLoading] = useState(true)
     const [isFaceDetected, setIsFaceDetected] = useState(false)
+    const [faceLandmarks, setFaceLandmarks] = useState(null)
     const faceLandmarkerRef = useRef(null)
     const videoRef = useRef(null)
     const animationFrameRef = useRef(null)
@@ -71,6 +72,9 @@ export function useFaceLandmarker() {
 
             if (results.faceBlendshapes && results.faceBlendshapes.length > 0) {
                 setIsFaceDetected(true)
+                if (results.faceLandmarks && results.faceLandmarks.length > 0) {
+                    setFaceLandmarks(results.faceLandmarks[0])
+                }
                 const blendshapes = results.faceBlendshapes[0].categories
 
                 // Improved emotion detection
@@ -114,6 +118,7 @@ export function useFaceLandmarker() {
         isReady,
         isModelLoading,
         isFaceDetected,
+        faceLandmarks,
         startDetection,
         stopDetection
     }

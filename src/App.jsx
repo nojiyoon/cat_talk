@@ -8,7 +8,7 @@ import './App.css'
 
 function App() {
   const { isListening, isSpeaking, transcript, startListening, stopListening, speak } = useSpeech()
-  const { emotion, emotionScores, isReady, isModelLoading, isFaceDetected, startDetection, stopDetection } = useFaceLandmarker()
+  const { emotion, emotionScores, isReady, isModelLoading, isFaceDetected, faceLandmarks, startDetection, stopDetection } = useFaceLandmarker()
   const [lastResponse, setLastResponse] = useState('')
   // Initialize chat history from localStorage
   const [chatHistory, setChatHistory] = useState(() => {
@@ -96,6 +96,70 @@ function App() {
     }
   }
 
+  const analyzePhysiognomy = () => {
+    if (!faceLandmarks) return null;
+
+    const getDist = (i1, i2) => {
+      const p1 = faceLandmarks[i1];
+      const p2 = faceLandmarks[i2];
+      return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+    };
+
+    // Eye Size (Simple approximation)
+    const leftEyeH = getDist(159, 145);
+    const rightEyeH = getDist(386, 374);
+    const faceWidth = getDist(234, 454);
+    const eyeRatio = (leftEyeH + rightEyeH) / (2 * faceWidth);
+    const eyeSize = eyeRatio > 0.06 ? "큼" : "작음";
+
+    // Forehead Height
+    const foreheadH = getDist(10, 168); // Top to Glabella
+    const faceH = getDist(10, 152); // Top to Chin
+    const foreheadRatio = foreheadH / faceH;
+    const foreheadHeight = foreheadRatio > 0.3 ? "넓음" : "좁음";
+
+    return { eyeSize, foreheadHeight };
+  };
+
+  const handlePhysiognomy = async () => {
+    if (!isFaceDetected || !faceLandmarks) {
+      speak("얼굴이 안 보여유~ 좀 더 가까이 와봐유!")
+      return
+    }
+
+    const features = analyzePhysiognomy()
+    if (!features) return
+
+    const featureText = `눈: ${features.eyeSize}, 이마: ${features.foreheadHeight}`
+
+    speak("어디 보자... 관상을 한번 봐볼까유?")
+    setLastResponse("🔮 관상 보는 중... (뚫어지게 쳐다봄)")
+
+    try {
+      const response = await getCatResponse(
+        `내 관상 좀 봐줘! 특징: ${featureText}`,
+        emotion,
+        chatHistory.slice(-5),
+        { isPhysiognomyMode: true, features }
+      )
+
+      setLastResponse(response)
+      speak(response)
+
+      // Save to history
+      const newHistory = [
+        ...chatHistory,
+        { role: 'user', content: "🔮 관상 봐줘!" },
+        { role: 'assistant', content: response }
+      ]
+      setChatHistory(newHistory)
+
+    } catch (error) {
+      console.error('Physiognomy error:', error)
+      speak("아이고, 기운이 딸려서 못 보겄슈...")
+    }
+  }
+
   return (
     <div className="app-container">
       {/* Video for face detection and user feedback */}
@@ -157,13 +221,23 @@ function App() {
           </div>
         </div>
 
-        <button
-          className={`mic-button ${isListening ? 'listening' : ''}`}
-          onClick={isListening ? stopListening : startListening}
-          disabled={isSpeaking}
-        >
-          {isListening ? '🎤 Listening...' : isSpeaking ? '💬 Speaking...' : '🎤 Click to Talk'}
-        </button>
+        <div className="button-group">
+          <button
+            className={`mic-button ${isListening ? 'listening' : ''}`}
+            onClick={isListening ? stopListening : startListening}
+            disabled={isSpeaking}
+          >
+            {isListening ? '🎤 Listening...' : isSpeaking ? '💬 Speaking...' : '🎤 Click to Talk'}
+          </button>
+
+          <button
+            className="physiognomy-button"
+            onClick={handlePhysiognomy}
+            disabled={isSpeaking || isListening || !isFaceDetected}
+          >
+            🔮 관상 봐주기
+          </button>
+        </div>
 
         {transcript && (
           <div className="transcript-box">
