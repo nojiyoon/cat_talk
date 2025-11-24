@@ -10,7 +10,7 @@
 
 ### 🗣️ 음성 대화 (Voice Interaction)
 - **Web Speech API**를 활용하여 사용자의 목소리를 실시간으로 텍스트로 변환(STT)합니다.
-- 고양이의 답변을 음성(TTS)으로 들려주어 실제 대화하는 듯한 경험을 제공합니다.
+- **ElevenLabs** 또는 **OpenAI TTS**를 사용하여 고품질의 자연스러운 AI 음성으로 답변을 들려줍니다. (Web Speech API는 백업으로 사용)
 
 ### 🧠 감정 인식 AI (Emotion Recognition)
 - **Google MediaPipe Face Landmarker**를 사용하여 실시간으로 사용자의 표정(행복, 슬픔, 무표정)을 분석합니다.
@@ -41,9 +41,10 @@
 - **3D Graphics**: React Three Fiber, @react-three/drei
 - **AI & ML**:
   - OpenAI API (GPT-4o-mini) - 대화 생성
+  - OpenAI TTS / ElevenLabs - 음성 합성 (TTS)
   - MediaPipe Face Landmarker - 얼굴 및 감정 인식
   - Teachable Machine (TensorFlow.js) - 동물상 분류
-- **Web APIs**: Web Speech API (STT/TTS)
+- **Web APIs**: Web Speech API (STT)
 - **Styling**: CSS3 (Glassmorphism UI)
 - **Deployment**: Vercel
 
@@ -112,7 +113,8 @@ src/
 │   ├── useFaceLandmarker.js # 얼굴 및 감정 인식 로직
 │   └── useTeachableMachine.js # 동물상 분류 모델 로직
 ├── services/
-│   └── aiService.js     # OpenAI API 통신 로직
+│   ├── aiService.js     # OpenAI API 통신 로직
+│   └── supabase.js      # Supabase 클라이언트 설정
 ├── App.jsx              # 메인 애플리케이션 로직 (UI, 상태 관리)
 └── App.css              # 스타일링
 ```
